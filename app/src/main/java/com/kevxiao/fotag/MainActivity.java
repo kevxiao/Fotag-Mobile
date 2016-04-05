@@ -1,0 +1,214 @@
+package com.kevxiao.fotag;
+
+import android.app.Activity;
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.drawable.ColorDrawable;
+import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.SearchView;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.GridView;
+import android.widget.ImageView;
+import android.widget.ListView;
+import android.widget.RatingBar;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Observable;
+import java.util.Observer;
+
+public class MainActivity extends AppCompatActivity implements Observer{
+
+    // PUBLIC
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+
+        SearchManager searchManager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+        SearchView searchView = (SearchView) menu.findItem(R.id.action_search).getActionView();
+        // Assumes current activity is the searchable activity
+        searchView.setSearchableInfo(searchManager.getSearchableInfo(getComponentName()));
+        searchView.setIconifiedByDefault(true);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        MenuItemCompat.setOnActionExpandListener(searchItem, new MenuItemCompat.OnActionExpandListener() {
+            @Override
+            public boolean onMenuItemActionExpand(MenuItem item) {
+                return true;
+            }
+
+            @Override
+            public boolean onMenuItemActionCollapse(MenuItem item) {
+                fotagModel.changeSearchMode("");
+                return true;
+            }
+        });
+
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        //noinspection SimplifiableIfStatement
+        if (id == R.id.action_load) {
+            Field[] ID_Fields = com.kevxiao.fotag.R.drawable.class.getFields();
+            for(Field field : ID_Fields) {
+                if(field.getName().contains("cust_img_")) {
+                    fotagModel.addImage(new ImageModel(0, "@drawable/" + field.getName()));
+                }
+            }
+            return true;
+        } else if (id == R.id.action_reset) {
+            fotagModel.clearImages();
+            return true;
+        } else if (id == R.id.action_clear) {
+            fotagModel.clearSearchAndRating();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void update(Observable observable, Object data) {
+        ArrayList<ImageModel> images = fotagModel.getImages();
+        int ratingFilter = fotagModel.getFilterMode();
+        String[] searchFilters = fotagModel.getSearchMode().split("\\s+");
+        imageModels.clear();
+        for(ImageModel model : images) {
+            if(!imageModels.contains(model) && model.getRating() >= ratingFilter) {
+                if(searchFilters.length == 1 && searchFilters[0].length() == 0) {
+                    imageModels.add(model);
+                    //int imageResource = getResources().getIdentifier(model.getPath(), null, getPackageName());
+                    //Drawable image = ResourcesCompat.getDrawable(getResources(), imageResource, null);
+                } else {
+                    boolean missSearch = false;
+                    String name = model.getPath().substring("@drawable/cust_img_".length());
+                    for(String searchStr : searchFilters) {
+                        if(!name.contains(searchStr)) {
+                            missSearch = true;
+                            break;
+                        }
+                    }
+                    if(!missSearch) {
+                        imageModels.add(model);
+                        //int imageResource = getResources().getIdentifier(model.getPath(), null, getPackageName());
+                        //Drawable image = ResourcesCompat.getDrawable(getResources(), imageResource, null);
+                    }
+                }
+            }
+        }
+        if (ratingFiler.getRating() != fotagModel.getFilterMode()) {
+            ratingFiler.setRating(fotagModel.getFilterMode());
+        }
+
+        if(listView.getClass() == ListView.class) {
+            ((ImageArrayAdapter)((ListView)listView).getAdapter()).notifyDataSetChanged();
+        } else if(listView.getClass() == GridView.class) {
+            ((ImageArrayAdapter)((GridView)listView).getAdapter()).notifyDataSetChanged();
+        }
+    }
+
+    // PROTECTED
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        ratingFiler = (RatingBar) findViewById(R.id.rating_filter);
+        if (ratingFiler != null) {
+            ratingFiler.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
+                @Override
+                public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+                    fotagModel.changeFilterMode((int)rating);
+                }
+            });
+        }
+
+        if(savedInstanceState != null && savedInstanceState.containsKey("savedModel") && savedInstanceState.getParcelable("savedModel") != null) {
+            fotagModel = savedInstanceState.getParcelable("savedModel");
+        } else {
+            fotagModel = new FotagModel();
+        }
+        if (fotagModel != null) {
+            if(fotagModel.countObservers() > 0) {
+                fotagModel.deleteObservers();
+            }
+            fotagModel.addObserver(this);
+        }
+        imageModels = new ArrayList<>();
+
+        listView = findViewById(R.id.contentView);
+        ImageArrayAdapter adapter = new ImageArrayAdapter(this, R.layout.listview_item, imageModels, fotagModel);
+        if (listView != null) {
+            if(listView.getClass() == ListView.class) {
+                ((ListView)listView).setAdapter(adapter);
+            } else if(listView.getClass() == GridView.class) {
+                ((GridView)listView).setAdapter(adapter);
+            }
+        }
+
+        ImageView fsImg = (ImageView)findViewById(R.id.full_screen_img);
+        if(fsImg != null) {
+            fsImg.setBackground(new ColorDrawable(ContextCompat.getColor(fsImg.getContext(), android.R.color.transparent)));
+            fsImg.setImageResource(android.R.color.transparent);
+            fsImg.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    v.setClickable(false);
+                    v.setBackground(new ColorDrawable(ContextCompat.getColor(v.getContext(), android.R.color.transparent)));
+                    ((ImageView) v).setImageResource(android.R.color.transparent);
+                }
+            });
+            fsImg.setClickable(false);
+        }
+
+        handleIntent(getIntent());
+
+        update(fotagModel, null);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    @Override
+    protected void onSaveInstanceState (Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putParcelable("savedModel", fotagModel);
+    }
+
+    // PRIVATE
+
+    private FotagModel fotagModel;
+    private ArrayList<ImageModel> imageModels;
+    private RatingBar ratingFiler;
+    private View listView;
+
+    private void handleIntent(Intent intent) {
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            fotagModel.changeSearchMode(query);
+        }
+    }
+}
