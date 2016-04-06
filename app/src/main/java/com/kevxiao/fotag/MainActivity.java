@@ -66,14 +66,6 @@ public class MainActivity extends AppCompatActivity implements Observer{
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_load) {
-            /*
-            Field[] ID_Fields = com.kevxiao.fotag.R.drawable.class.getFields();
-            for(Field field : ID_Fields) {
-                if(field.getName().contains("cust_img_")) {
-                    fotagModel.addImage(new ImageModel(0, "@drawable/" + field.getName()));
-                }
-            }
-            */
             getImages();
             return true;
         } else if (id == R.id.action_reset) {
