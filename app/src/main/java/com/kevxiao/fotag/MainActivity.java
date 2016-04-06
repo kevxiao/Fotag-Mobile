@@ -101,7 +101,13 @@ public class MainActivity extends AppCompatActivity implements Observer{
                     //Drawable image = ResourcesCompat.getDrawable(getResources(), imageResource, null);
                 } else {
                     boolean missSearch = false;
-                    String name = model.getPath().substring("@drawable/cust_img_".length());
+                    String path = model.getPath();
+                    String name;
+                    if(path.lastIndexOf('.') > path.lastIndexOf('/')) {
+                        name = path.substring(path.lastIndexOf('/') + 1, path.lastIndexOf('.'));
+                    } else {
+                        name = path.substring(path.lastIndexOf('/') + 1);
+                    }
                     for(String searchStr : searchFilters) {
                         if(!name.contains(searchStr)) {
                             missSearch = true;
