@@ -116,8 +116,6 @@ public class MainActivity extends AppCompatActivity implements Observer{
                     }
                     if(!missSearch) {
                         imageModels.add(model);
-                        //int imageResource = getResources().getIdentifier(model.getPath(), null, getPackageName());
-                        //Drawable image = ResourcesCompat.getDrawable(getResources(), imageResource, null);
                     }
                 }
             }

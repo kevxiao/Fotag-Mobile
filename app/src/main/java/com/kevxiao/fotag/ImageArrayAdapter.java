@@ -67,7 +67,6 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
         if((int)imageHolder.imgRating.getRating() != image.getRating() && imageHolder.imgPath.equals(image.getPath())) {
             imageHolder.imgRating.setRating(image.getRating());
         }
-        //imageHolder.imgIcon.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
         imageHolder.imgIcon.setImageBitmap(decodeSampledBitmapFromPath(image.getPath(), 250, 150));
 
         return row;
