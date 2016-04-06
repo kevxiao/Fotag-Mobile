@@ -1,11 +1,13 @@
 package com.kevxiao.fotag;
 
-import android.app.Activity;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -14,13 +16,11 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Observable;
 import java.util.Observer;
@@ -66,12 +66,15 @@ public class MainActivity extends AppCompatActivity implements Observer{
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_load) {
+            /*
             Field[] ID_Fields = com.kevxiao.fotag.R.drawable.class.getFields();
             for(Field field : ID_Fields) {
                 if(field.getName().contains("cust_img_")) {
                     fotagModel.addImage(new ImageModel(0, "@drawable/" + field.getName()));
                 }
             }
+            */
+            getImages();
             return true;
         } else if (id == R.id.action_reset) {
             fotagModel.clearImages();
@@ -209,6 +212,30 @@ public class MainActivity extends AppCompatActivity implements Observer{
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
             fotagModel.changeSearchMode(query);
+        }
+    }
+
+    private void getImages() {
+        Uri uri;
+        Cursor cursor;
+        int column_index_data;
+        String path;
+        uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+
+        String[] projection = {MediaStore.MediaColumns.DATA,
+                MediaStore.Images.Media.BUCKET_DISPLAY_NAME};
+
+        cursor = getContentResolver().query(uri, projection, null,
+                null, null);
+
+        if (cursor != null) {
+            column_index_data = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+            while (cursor.moveToNext()) {
+                path = cursor.getString(column_index_data);
+
+                fotagModel.addImage(new ImageModel(0, path));
+            }
+            cursor.close();
         }
     }
 }

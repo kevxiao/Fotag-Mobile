@@ -14,6 +14,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.RatingBar;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -67,7 +68,7 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
             imageHolder.imgRating.setRating(image.getRating());
         }
         //imageHolder.imgIcon.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
-        imageHolder.imgIcon.setImageBitmap(decodeSampledBitmapFromResource(context.getResources(), context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()), 250, 150));
+        imageHolder.imgIcon.setImageBitmap(decodeSampledBitmapFromPath(image.getPath(), 250, 150));
 
         return row;
     }
@@ -101,18 +102,18 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
         return inSampleSize;
     }
 
-    private static Bitmap decodeSampledBitmapFromResource(Resources res, int resId, int reqWidth, int reqHeight) {
+    private static Bitmap decodeSampledBitmapFromPath(String path, int reqWidth, int reqHeight) {
         // First decode with inJustDecodeBounds=true to check dimensions
         final BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
-        BitmapFactory.decodeResource(res, resId, options);
+        BitmapFactory.decodeFile(path, options);
 
         // Calculate inSampleSize
         options.inSampleSize = calculateInSampleSize(options, reqWidth, reqHeight);
 
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
-        return BitmapFactory.decodeResource(res, resId, options);
+        return BitmapFactory.decodeFile(path, options);
     }
 
     private static class OnImgRatingChangeListener implements RatingBar.OnRatingBarChangeListener {
@@ -153,7 +154,12 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
             ImageView fsImg = (ImageView)((Activity)context).findViewById(R.id.full_screen_img);
             fsImg.setClickable(true);
             fsImg.setBackground(new ColorDrawable(ContextCompat.getColor(fsImg.getContext(), android.R.color.black)));
-            fsImg.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
+            // fsImg.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
+            File imgFile = new File(image.getPath());
+            if(imgFile.exists()){
+                Bitmap bm = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+                fsImg.setImageBitmap(bm);
+            }
         }
 
         // PRIVATE
