@@ -42,45 +42,26 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
     public View getView(int position, View convertView, ViewGroup parent) {
         View row = convertView;
         ImageHolder imageHolder;
-        final ImageModel image = imageList.get(position);
+        ImageModel image = imageList.get(position);
 
         if(row == null)
         {
             LayoutInflater inflater = ((Activity)context).getLayoutInflater();
             row = inflater.inflate(layoutResourceId, parent, false);
-
-            imageHolder = new ImageHolder();
-            imageHolder.imgIcon = (ImageView)row.findViewById(R.id.card_photo);
-            imageHolder.imgRating = (RatingBar)row.findViewById(R.id.card_rating);
-            imageHolder.imgPath = image.getPath();
-            if(imageHolder.imgRating != null) {
-                imageHolder.imgRating.setOnRatingBarChangeListener(new RatingBar.OnRatingBarChangeListener() {
-                    @Override
-                    public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
-                        if(image.getRating() != rating && fromUser) {
-                            fotagModel.changeImageRating(image.getPath(), (int) rating);
-                        }
-                    }
-                });
-            }
-            if(imageHolder.imgIcon != null) {
-                imageHolder.imgIcon.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        ImageView fsImg = (ImageView)((Activity)context).findViewById(R.id.full_screen_img);
-                        fsImg.setClickable(true);
-                        fsImg.setBackground(new ColorDrawable(ContextCompat.getColor(fsImg.getContext(), android.R.color.black)));
-                        fsImg.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
-                    }
-                });
-            }
-
-            row.setTag(imageHolder);
         }
-        else
-        {
-            imageHolder = (ImageHolder)row.getTag();
+
+        imageHolder = new ImageHolder();
+        imageHolder.imgIcon = (ImageView)row.findViewById(R.id.card_photo);
+        imageHolder.imgRating = (RatingBar)row.findViewById(R.id.card_rating);
+        imageHolder.imgPath = image.getPath();
+        if(imageHolder.imgRating != null) {
+            imageHolder.imgRating.setOnRatingBarChangeListener(new OnImgRatingChangeListener(image, fotagModel));
         }
+        if(imageHolder.imgIcon != null) {
+            imageHolder.imgIcon.setOnClickListener(new OnImgClickListener(image, context));
+        }
+
+        row.setTag(imageHolder);
 
         if((int)imageHolder.imgRating.getRating() != image.getRating() && imageHolder.imgPath.equals(image.getPath())) {
             imageHolder.imgRating.setRating(image.getRating());
@@ -132,5 +113,52 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
         // Decode bitmap with inSampleSize set
         options.inJustDecodeBounds = false;
         return BitmapFactory.decodeResource(res, resId, options);
+    }
+
+    private static class OnImgRatingChangeListener implements RatingBar.OnRatingBarChangeListener {
+
+        // PUBLIC
+
+        public OnImgRatingChangeListener(ImageModel img, FotagModel md) {
+            super();
+            image = img;
+            fotagModel = md;
+        }
+
+        @Override
+        public void onRatingChanged(RatingBar ratingBar, float rating, boolean fromUser) {
+            if(image.getRating() != rating && fromUser) {
+                fotagModel.changeImageRating(image.getPath(), (int) rating);
+            }
+        }
+
+        // PRIVATE
+
+        private ImageModel image;
+        private FotagModel fotagModel;
+    }
+
+    private static class OnImgClickListener implements View.OnClickListener {
+
+        // PUBLIC
+
+        public OnImgClickListener(ImageModel img, Context c) {
+            super();
+            image = img;
+            context = c;
+        }
+
+        @Override
+        public void onClick(View v) {
+            ImageView fsImg = (ImageView)((Activity)context).findViewById(R.id.full_screen_img);
+            fsImg.setClickable(true);
+            fsImg.setBackground(new ColorDrawable(ContextCompat.getColor(fsImg.getContext(), android.R.color.black)));
+            fsImg.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
+        }
+
+        // PRIVATE
+
+        private ImageModel image;
+        private Context context;
     }
 }
