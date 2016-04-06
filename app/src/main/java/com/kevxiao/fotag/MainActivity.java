@@ -1,13 +1,19 @@
 package com.kevxiao.fotag;
 
+import android.Manifest;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -20,6 +26,7 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RatingBar;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Observable;
@@ -66,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements Observer{
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_load) {
-            getImages();
+            loadAction();
             return true;
         } else if (id == R.id.action_reset) {
             fotagModel.clearImages();
@@ -89,8 +96,6 @@ public class MainActivity extends AppCompatActivity implements Observer{
             if(!imageModels.contains(model) && model.getRating() >= ratingFilter) {
                 if(searchFilters.length == 1 && searchFilters[0].length() == 0) {
                     imageModels.add(model);
-                    //int imageResource = getResources().getIdentifier(model.getPath(), null, getPackageName());
-                    //Drawable image = ResourcesCompat.getDrawable(getResources(), imageResource, null);
                 } else {
                     boolean missSearch = false;
                     String path = model.getPath();
@@ -120,6 +125,26 @@ public class MainActivity extends AppCompatActivity implements Observer{
             ((ImageArrayAdapter)((ListView)listView).getAdapter()).notifyDataSetChanged();
         } else if(listView.getClass() == GridView.class) {
             ((ImageArrayAdapter)((GridView)listView).getAdapter()).notifyDataSetChanged();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    // Schedule start
+                    PendingIntent pi = PendingIntent.getActivity(this, 0, getIntent(), PendingIntent.FLAG_CANCEL_CURRENT);
+                    AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+                    am.set(AlarmManager.RTC, System.currentTimeMillis(), pi);
+
+                    // Stop now
+                    System.exit(0);
+                } else {
+                    Toast.makeText(this, R.string.read_ext_perm_denied, Toast.LENGTH_SHORT).show();
+                }
+            }
         }
     }
 
@@ -183,6 +208,8 @@ public class MainActivity extends AppCompatActivity implements Observer{
         handleIntent(getIntent());
 
         update(fotagModel, null);
+
+        loadAction();
     }
 
     @Override
@@ -204,6 +231,8 @@ public class MainActivity extends AppCompatActivity implements Observer{
     private RatingBar ratingFiler;
     private View listView;
 
+    private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
+
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
             String query = intent.getStringExtra(SearchManager.QUERY);
@@ -216,6 +245,7 @@ public class MainActivity extends AppCompatActivity implements Observer{
         Cursor cursor;
         int column_index_data;
         String path;
+
         uri = android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
 
         String[] projection = {MediaStore.MediaColumns.DATA,
@@ -232,6 +262,14 @@ public class MainActivity extends AppCompatActivity implements Observer{
                 fotagModel.addImage(new ImageModel(0, path));
             }
             cursor.close();
+        }
+    }
+
+    private void loadAction() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            getImages();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
         }
     }
 }

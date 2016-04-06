@@ -6,4 +6,5 @@
     <string name="search_img">Search Images</string>
     <string name="clear_rating">Clear Rating and Search</string>
     <string name="img_desc">Image</string>
+    <string name="read_ext_perm_denied">Cannot load images, permission denied</string>
 </resources>

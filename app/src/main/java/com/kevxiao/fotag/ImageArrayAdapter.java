@@ -153,7 +153,6 @@ public class ImageArrayAdapter extends ArrayAdapter<ImageModel>{
             ImageView fsImg = (ImageView)((Activity)context).findViewById(R.id.full_screen_img);
             fsImg.setClickable(true);
             fsImg.setBackground(new ColorDrawable(ContextCompat.getColor(fsImg.getContext(), android.R.color.black)));
-            // fsImg.setImageResource(context.getResources().getIdentifier(image.getPath(), null, context.getPackageName()));
             File imgFile = new File(image.getPath());
             if(imgFile.exists()){
                 Bitmap bm = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
