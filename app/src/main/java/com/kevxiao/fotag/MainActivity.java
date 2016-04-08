@@ -131,7 +131,7 @@ public class MainActivity extends AppCompatActivity implements Observer{
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
-            case MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE: {
+            case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     // Schedule start
@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity implements Observer{
     private RatingBar ratingFiler;
     private View listView;
 
-    private static final int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 1;
+    private static final int MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE = 1;
 
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
@@ -259,17 +259,17 @@ public class MainActivity extends AppCompatActivity implements Observer{
             while (cursor.moveToNext()) {
                 path = cursor.getString(column_index_data);
 
-                fotagModel.addImage(new ImageModel(0, path));
+                fotagModel.addImage(new ImageModel(path));
             }
             cursor.close();
         }
     }
 
     private void loadAction() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
             getImages();
         } else {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE);
         }
     }
 }
