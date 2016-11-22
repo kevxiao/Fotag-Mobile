@@ -134,13 +134,7 @@ public class MainActivity extends AppCompatActivity implements Observer{
             case MY_PERMISSIONS_REQUEST_WRITE_EXTERNAL_STORAGE: {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    // Schedule start
-                    PendingIntent pi = PendingIntent.getActivity(this, 0, getIntent(), PendingIntent.FLAG_CANCEL_CURRENT);
-                    AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-                    am.set(AlarmManager.RTC, System.currentTimeMillis(), pi);
-
-                    // Stop now
-                    System.exit(0);
+                    getImages();
                 } else {
                     Toast.makeText(this, R.string.read_ext_perm_denied, Toast.LENGTH_SHORT).show();
                 }
